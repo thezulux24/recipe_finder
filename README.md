@@ -107,9 +107,7 @@ streamlit run main.py
 4.  Push a la Branch (`git push origin feature/AmazingFeature`).
 5.  Abre un Pull Request.
 
-## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Mira el archivo `LICENSE` para más detalles (si decides añadir uno).
 
 ---
 
