@@ -2,7 +2,7 @@
 
 ¡Transforma los ingredientes que tienes en casa en deliciosas recetas personalizadas y alcanza tus metas de fitness con la ayuda de la Inteligencia Artificial!
 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://TU_LINK_A_LA_APP_STREAMLIT_AQUI) 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://smartrecipe.streamlit.app/) 
 
 
 
