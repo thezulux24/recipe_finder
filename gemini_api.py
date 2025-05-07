@@ -7,8 +7,8 @@ import os
 
 # Obtiene la API key desde st.secrets
 # Asegúrate de que el nombre de la clave aquí coincida con el de tu archivo secrets.toml
-GENAI_API_KEY = st.secrets.get("gemini_api_key") 
-
+#GENAI_API_KEY = st.secrets.get("gemini_api_key") 
+GENAI_API_KEY = st.secrets["gemini_api_key"] 
 # Configura genai con la API key
 if GENAI_API_KEY:
     genai.configure(api_key=GENAI_API_KEY)
