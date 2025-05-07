@@ -64,17 +64,12 @@ with tab1:
                     st.warning("Por favor, ingresa ingredientes válidos.")
                 else:
                     with st.spinner(f"Buscando recetas para '{selected_fitness_goal_normal}'..."):
-                        recipe_text, image_url = get_recipe_from_gemini(
+                        recipe_text = get_recipe_from_gemini(
                             ingredients=ingredients_list,
                             diet_restrictions=actual_diet_restrictions,
                             fitness_goal=selected_fitness_goal_normal,
-                            unavailable_utensils=unavailable_utensils
+                            unavailable_utensils=unavailable_utensils 
                         )
-                        
-                        if recipe_text:
-                            st.markdown(recipe_text)
-                            if image_url:
-                                st.image(image_url, caption="Imagen representativa de la receta")
                     st.session_state.recipe_suggestion = recipe_text
                     st.session_state.recipe_title = "✨ Tu Receta Personalizada ✨"
     
