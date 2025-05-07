@@ -146,6 +146,7 @@ Asegúrate de que la receta sea realista, deliciosa y cumpla lo mejor posible co
 def get_recipe_from_gemini(ingredients, diet_restrictions=None, fitness_goal=None, unavailable_utensils=None, custom_prompt=None):
     """
     Obtiene una receta de Gemini. Puede usar un prompt pre-generado o construir uno.
+    Incluye soporte para extraer un enlace a una imagen representativa de la receta.
     """
     global model
     global GENAI_API_KEY 
@@ -162,11 +163,11 @@ def get_recipe_from_gemini(ingredients, diet_restrictions=None, fitness_goal=Non
                 print("Modelo Gemini re-inicializado exitosamente en get_recipe_from_gemini.")
             except Exception as e:
                 print(f"Error al re-configurar Gemini API en get_recipe_from_gemini: {e}")
-                return f"Error al re-configurar la IA: {e}"
+                return f"Error al re-configurar la IA: {e}", None
         
         if not model: 
             print("Fallo al re-inicializar el modelo. API key podría faltar o ser inválida.")
-            return "Error: La API key de Gemini no está configurada correctamente en los secretos de Streamlit (st.secrets) o el modelo no pudo ser inicializado. Por favor, verifica la configuración de secretos de la app."
+            return "Error: La API key de Gemini no está configurada correctamente en los secretos de Streamlit (st.secrets) o el modelo no pudo ser inicializado. Por favor, verifica la configuración de secretos de la app.", None
     
     try:
         final_prompt = custom_prompt
@@ -184,25 +185,48 @@ def get_recipe_from_gemini(ingredients, diet_restrictions=None, fitness_goal=Non
                 unavailable_utensils
             )
         
+        # Agregar solicitud de imagen al prompt
+        final_prompt += "\nAdemás, proporciona un enlace a una imagen representativa de la receta, si es posible."
+
         print(f"Enviando prompt a Gemini: {final_prompt[:200]}...") 
         response = model.generate_content(final_prompt)
         print("Respuesta recibida de Gemini.")
         
         if hasattr(response, 'text'):
-            return response.text
+            recipe_text = response.text
+            # Extraer enlace de imagen de la respuesta
+            image_url = extract_image_url(recipe_text)
+            return recipe_text, image_url
         elif response.parts and hasattr(response.parts[0], 'text'):
-            return response.parts[0].text
+            recipe_text = response.parts[0].text
+            image_url = extract_image_url(recipe_text)
+            return recipe_text, image_url
         else:
             try:
                 if response.candidates and response.candidates[0].content and response.candidates[0].content.parts:
-                    return response.candidates[0].content.parts[0].text
+                    recipe_text = response.candidates[0].content.parts[0].text
+                    image_url = extract_image_url(recipe_text)
+                    return recipe_text, image_url
             except (AttributeError, IndexError):
                 pass 
             
             print(f"Respuesta inesperada de Gemini (no se pudo extraer texto): {response}")
-            return "Error: No se pudo extraer el texto de la respuesta de Gemini. La estructura de la respuesta puede haber cambiado o estar vacía."
+            return "Error: No se pudo extraer el texto de la respuesta de Gemini. La estructura de la respuesta puede haber cambiado o estar vacía.", None
 
     except Exception as e:
         print(f"Error completo en la llamada a Gemini API: {e}") 
         error_message = f"Error al contactar con la IA para generar la receta. (Detalle: {str(e)[:150]}...)"
-        return error_message
+        return error_message, None
+
+
+def extract_image_url(recipe_text):
+    """
+    Extrae un enlace a una imagen de la receta desde el texto generado.
+    Busca patrones comunes de URLs en el texto.
+    """
+    import re
+    url_pattern = r'(https?://[^\s]+)'  # Patrón para encontrar URLs
+    match = re.search(url_pattern, recipe_text)
+    if match:
+        return match.group(0)
+    return None
