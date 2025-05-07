@@ -1,22 +1,22 @@
-import streamlit as st # Import Streamlit
+import streamlit as st
 import google.generativeai as genai
 import os
-# from dotenv import load_dotenv # Ya no es necesario
-
-# load_dotenv()  # Ya no es necesario
 
 # Obtiene la API key desde st.secrets
-# Asegúrate de que el nombre de la clave aquí coincida con el de tu archivo secrets.toml
-#GENAI_API_KEY = st.secrets.get("gemini_api_key") 
-GENAI_API_KEY = st.secrets["gemini_api_key"] 
-# Configura genai con la API key
+GENAI_API_KEY = st.secrets.get("gemini_api_key") 
+
+model = None # Inicializar model como None globalmente
+
 if GENAI_API_KEY:
-    genai.configure(api_key=GENAI_API_KEY)
-    model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest") 
+    try:
+        genai.configure(api_key=GENAI_API_KEY)
+        model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest")
+        print("Modelo Gemini inicializado exitosamente al cargar el módulo.")
+    except Exception as e:
+        print(f"Error al configurar Gemini API o el modelo inicialmente: {e}")
+        # model permanece None, get_recipe_from_gemini intentará re-inicializar.
 else:
-    model = None
-    # Opcional: Mostrar una advertencia en la app si la clave no está configurada al iniciar
-    # st.warning("La API key de Gemini no está configurada en los secretos de Streamlit. La funcionalidad de IA estará deshabilitada.")
+    print("API key de Gemini no encontrada en st.secrets al cargar el módulo.")
 
 
 def generate_recipe_prompt(ingredients, diet_restrictions=None, fitness_goal=None, unavailable_utensils=None):
@@ -38,7 +38,7 @@ def generate_recipe_prompt(ingredients, diet_restrictions=None, fitness_goal=Non
     if fitness_goal and fitness_goal != "General":
         prompt += f" Esta receta debe estar optimizada para el objetivo de '{fitness_goal}'."
     else: 
-        if not ingredients: # Si no hay ingredientes, el objetivo fitness es el principal descriptor
+        if not ingredients: 
              prompt += f" Esta receta debe ser ideal para un enfoque '{fitness_goal}' en general."
     
     if unavailable_utensils:
@@ -147,16 +147,26 @@ def get_recipe_from_gemini(ingredients, diet_restrictions=None, fitness_goal=Non
     """
     Obtiene una receta de Gemini. Puede usar un prompt pre-generado o construir uno.
     """
+    global model
+    global GENAI_API_KEY # Necesario si modificamos GENAI_API_KEY dentro de esta función
+
     if not model:
-        # Intentar obtener la clave de nuevo si el modelo no se inicializó (puede ser útil si los secretos se cargan tarde)
-        global GENAI_API_KEY, model
-        GENAI_API_KEY = st.secrets.get("gemini_api_key")
-        if GENAI_API_KEY:
-            genai.configure(api_key=GENAI_API_KEY)
-            model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest")
+        print("El modelo no está inicializado. Intentando re-inicializar...")
+        current_api_key_retry = st.secrets.get("gemini_api_key")
+        if current_api_key_retry:
+            if not GENAI_API_KEY: # Si la global no estaba seteada (ej. no se encontró al inicio)
+                 GENAI_API_KEY = current_api_key_retry
+            try:
+                genai.configure(api_key=current_api_key_retry)
+                model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest")
+                print("Modelo Gemini re-inicializado exitosamente en get_recipe_from_gemini.")
+            except Exception as e:
+                print(f"Error al re-configurar Gemini API en get_recipe_from_gemini: {e}")
+                return f"Error al re-configurar la IA: {e}" # Mensaje para el usuario
         
-        if not model: # Si sigue sin estar configurado, retorna el error
-            return "Error: La API key de Gemini no está configurada en los secretos de Streamlit (st.secrets) o el modelo no pudo ser inicializado."
+        if not model: 
+            print("Fallo al re-inicializar el modelo. API key podría faltar o ser inválida.")
+            return "Error: La API key de Gemini no está configurada correctamente en los secretos de Streamlit (st.secrets) o el modelo no pudo ser inicializado. Por favor, verifica la configuración de secretos de la app."
     
     try:
         final_prompt = custom_prompt
@@ -174,7 +184,9 @@ def get_recipe_from_gemini(ingredients, diet_restrictions=None, fitness_goal=Non
                 unavailable_utensils
             )
         
+        print(f"Enviando prompt a Gemini: {final_prompt[:200]}...") # Loguear inicio del prompt
         response = model.generate_content(final_prompt)
+        print("Respuesta recibida de Gemini.")
         
         if hasattr(response, 'text'):
             return response.text
@@ -187,10 +199,10 @@ def get_recipe_from_gemini(ingredients, diet_restrictions=None, fitness_goal=Non
             except (AttributeError, IndexError):
                 pass 
             
-            print(f"Respuesta inesperada de Gemini: {response}")
-            return "Error: No se pudo extraer el texto de la respuesta de Gemini. La estructura de la respuesta puede haber cambiado."
+            print(f"Respuesta inesperada de Gemini (no se pudo extraer texto): {response}")
+            return "Error: No se pudo extraer el texto de la respuesta de Gemini. La estructura de la respuesta puede haber cambiado o estar vacía."
 
     except Exception as e:
-        print(f"Error completo de API: {e}") 
-        error_message = f"Error al contactar con Gemini API. Verifica tu conexión, la API key o los límites de la API. (Detalle: {str(e)[:150]}...)"
+        print(f"Error completo en la llamada a Gemini API: {e}") 
+        error_message = f"Error al contactar con la IA para generar la receta. (Detalle: {str(e)[:150]}...)"
         return error_message
