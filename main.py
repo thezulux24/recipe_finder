@@ -2,21 +2,20 @@ import streamlit as st
 from gemini_api import get_recipe_from_gemini, generate_pro_recipe_prompt 
 import re
 
-# Inicializar session_state para la receta y el título si no existen
 if 'recipe_suggestion' not in st.session_state:
     st.session_state.recipe_suggestion = None
 if 'recipe_title' not in st.session_state:
     st.session_state.recipe_title = ""
-if 'pro_recipe_suggestion' not in st.session_state: # Para el modo pro
+if 'pro_recipe_suggestion' not in st.session_state: 
     st.session_state.pro_recipe_suggestion = None
-if 'pro_recipe_title' not in st.session_state: # Para el modo pro
+if 'pro_recipe_title' not in st.session_state: 
     st.session_state.pro_recipe_title = ""
 
 
-# Título de la aplicación
+
 st.title("🍳 Buscador de Recetas Inteligente & Fitness 🏋️")
 
-# --- Sidebar (Común para ambos modos) ---
+
 st.sidebar.header("Filtros Generales")
 diet_options = ["Ninguna", "Vegano", "Vegetariano", "Sin Gluten", "Bajo en Carbohidratos", "Keto", "Paleo"]
 selected_diets = st.sidebar.multiselect("Tipo de Dieta (opcional):", diet_options)
@@ -26,9 +25,8 @@ unavailable_utensils = st.sidebar.multiselect("Utensilios NO disponibles (opcion
 
 st.sidebar.markdown("---")
 st.sidebar.info("App creada con Streamlit y Gemini AI.")
-# --- Fin Sidebar ---
 
-# Crear pestañas para los modos
+
 tab1, tab2 = st.tabs(["Búsqueda Normal 🧑‍🍳", "Modo Pro Nutrición Avanzada 🎯"])
 
 with tab1:
@@ -70,7 +68,7 @@ with tab1:
                             ingredients=ingredients_list,
                             diet_restrictions=actual_diet_restrictions,
                             fitness_goal=selected_fitness_goal_normal,
-                            unavailable_utensils=unavailable_utensils # Nuevo parámetro
+                            unavailable_utensils=unavailable_utensils 
                         )
                     st.session_state.recipe_suggestion = recipe_text
                     st.session_state.recipe_title = "✨ Tu Receta Personalizada ✨"
@@ -84,12 +82,12 @@ with tab1:
                     ingredients=None,
                     diet_restrictions=actual_diet_restrictions,
                     fitness_goal=selected_fitness_goal_normal,
-                    unavailable_utensils=unavailable_utensils # Nuevo parámetro
+                    unavailable_utensils=unavailable_utensils
                 )
             st.session_state.recipe_suggestion = recipe_text
             st.session_state.recipe_title = "🎁 ¡Tu Receta Sorpresa! 🎁"
 
-    # Mostrar la receta generada para el modo normal
+
     if st.session_state.recipe_suggestion:
         st.markdown("---")
         st.subheader(st.session_state.recipe_title)
@@ -143,20 +141,20 @@ with tab2:
                         essential_ingredients=essential_ingredients_list,
                         nutritional_targets=nutritional_targets,
                         diet_restrictions=actual_diet_restrictions_pro,
-                        unavailable_utensils=unavailable_utensils # Nuevo parámetro
+                        unavailable_utensils=unavailable_utensils
                     )
                     recipe_text_pro = get_recipe_from_gemini(
                         ingredients=None, 
                         diet_restrictions=None, 
                         fitness_goal=None, 
-                        unavailable_utensils=None, # Ya incluido en el pro_prompt
+                        unavailable_utensils=None, 
                         custom_prompt=pro_prompt 
                     )
 
                 st.session_state.pro_recipe_suggestion = recipe_text_pro
                 st.session_state.pro_recipe_title = "🎯 Tu Receta Pro Optimizada 🎯"
 
-    # Mostrar la receta generada para el modo pro
+
     if st.session_state.pro_recipe_suggestion:
         st.markdown("---")
         st.subheader(st.session_state.pro_recipe_title)
@@ -166,6 +164,6 @@ with tab2:
             st.markdown(st.session_state.pro_recipe_suggestion)
 
 
-# Pie de página común
+
 st.markdown("---")
 st.markdown("💡 **Consejo:** Para la búsqueda normal, cuanto más específico seas con los ingredientes, mejores serán los resultados. ¡Prueba añadir especias o hierbas que tengas!")
