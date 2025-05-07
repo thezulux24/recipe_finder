@@ -158,7 +158,7 @@ def get_recipe_from_gemini(ingredients, diet_restrictions=None, fitness_goal=Non
                  GENAI_API_KEY = current_api_key_retry
             try:
                 genai.configure(api_key=current_api_key_retry)
-                model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest")
+                model = genai.GenerativeModel(model_name="gemini-2.0-flash-latest")
                 print("Modelo Gemini re-inicializado exitosamente en get_recipe_from_gemini.")
             except Exception as e:
                 print(f"Error al re-configurar Gemini API en get_recipe_from_gemini: {e}")
