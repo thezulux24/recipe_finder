@@ -35,7 +35,7 @@ Sigue estos pasos para ejecutar la aplicación en tu entorno local:
 ### 2. Clonar el Repositorio
 
 ```bash
-git clone https://github.com/TU_USUARIO/recipe_finder.git
+git clone https://github.com/thezulux24/recipe_finder.git
 cd recipe_finder
 ```
 
